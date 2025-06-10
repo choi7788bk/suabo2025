@@ -6,7 +6,7 @@ st.set_page_config(page_title="Korea City Air Quality Dashboard", layout="wide")
 
 @st.cache_data
 def load_data():
-    """Load and tidy all pollutant CSV files into one long‑format DataFrame."""
+    """Load and tidy all pollutant CSV files into one long-format DataFrame."""
     pollutant_files = {
         "PM2.5 (㎍/m³)": "미세먼지_PM2.5__월별_도시별_대기오염도_20250610151935.csv",
         "PM10 (㎍/m³)": "미세먼지_PM10__월별_도시별_대기오염도_20250610152841.csv",
@@ -70,6 +70,34 @@ st.title(f"🏙️ {selected_province} {selected_city} 대기질 대시보드")
 if filtered.empty:
     st.warning("선택한 조건에 해당하는 데이터가 없습니다.")
     st.stop()
+
+# ✅ 대기질 점수 계산 및 표시
+score_data = filtered.groupby("pollutant")["value"].mean()
+
+normalized_scores = {
+    "PM2.5 (㎍/m³)": max(0, 100 - score_data.get("PM2.5 (㎍/m³)", 0) * 2),
+    "PM10 (㎍/m³)": max(0, 100 - score_data.get("PM10 (㎍/m³)", 0) * 1.5),
+    "SO₂ (ppm)": max(0, 100 - score_data.get("SO₂ (ppm)", 0) * 500),
+    "NO₂ (ppm)": max(0, 100 - score_data.get("NO₂ (ppm)", 0) * 300),
+    "CO (ppm)": max(0, 100 - score_data.get("CO (ppm)", 0) * 10),
+}
+
+final_score = sum(normalized_scores.values()) / len(normalized_scores)
+
+# 시각적 색상 및 이모지 매핑
+if final_score >= 80:
+    score_color = "🟢 매우 좋음"
+elif final_score >= 60:
+    score_color = "🟡 보통"
+elif final_score >= 40:
+    score_color = "🟠 나쁨"
+else:
+    score_color = "🔴 매우 나쁨"
+
+st.markdown("""
+### 🧮 종합 대기질 점수
+""")
+st.metric(label=f"{score_color} (100점 만점 기준)", value=f"{final_score:.1f}점")
 
 # 최신 월(가장 최근 데이터) 메트릭 표시
 latest_month = filtered["month"].max()
