@@ -155,3 +155,23 @@ else:
     html(make_map(mean_by_city)._repr_html_(), height=650)
     st.markdown("### :bar_chart: 시도별 오염물질 평균 농도 (단위: mg/kg 또는 pH)")
     st.dataframe(mean_by_city.set_index("시도").round(3), use_container_width=True)
+
+with st.sidebar.expander("📌 주요 오염물질이 인체 및 환경에 미치는 영향"):
+    st.markdown("""
+    - **카드뮴 (Cd)**: 인체에 축적되면 **신장 기능 저하**, **골다공증**, **폐 손상**을 유발하며, 토양에서는 식물의 생장 저해.
+    - **납 (Pb)**: **중추신경계 손상**, 어린이 발달 지연, 혈액 생성 기능 저하. 식물 흡수 시 먹이사슬로 전이.
+    - **수은 (Hg)**: 휘발성과 독성이 강함. **신경계 및 면역계 손상**, 태아에게 치명적. 수계 오염 시 생물 농축.
+    - **TPH (유류계)**: 토양의 생물학적 기능 저해. 식물 성장 억제, 지하수 오염 위험.
+    - **pH (수소이온농도)**: 토양의 산도/알칼리도. **강산성 또는 강알칼리성 토양**은 미생물 생존과 작물 생장에 큰 악영향.
+    """)
+
+st.markdown("## 🧠 오염물질 설명 카드")
+
+cols = st.columns(3)
+cols[0].info("**카드뮴 (Cd)**\n\n신장 손상, 골다공증 유발. 작물 생장 저해")
+cols[1].info("**납 (Pb)**\n\n신경계 손상, 어린이 건강 취약")
+cols[2].info("**수은 (Hg)**\n\n신경계·태아 독성, 수생 생물 농축")
+
+cols = st.columns(2)
+cols[0].info("**TPH (유류)**\n\n토양 기능 저하, 식물 성장 억제")
+cols[1].info("**pH**\n\n토양 산성도 변화 → 생태계 불균형")
