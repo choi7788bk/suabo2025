@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 st.set_page_config(
     page_title="Korea City Air Quality Dashboard",
-    page_icon="\ud83c\udf24\ufe0f",
+    page_icon=":sunny:",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -35,25 +35,25 @@ st.markdown(
 @st.cache_data
 def load_data():
     pollutant_files = {
-        "PM2.5 (\u33a1/m\u00b3)": "\ubbf8\uc138\uba3c\uc9c0_PM2.5.csv",
-        "PM10 (\u33a1/m\u00b3)": "\ubbf8\uc138\uba3c\uc9c0_PM10.csv",
-        "SO\u2082 (ppm)": "SO2.csv",
-        "NO\u2082 (ppm)": "NO2.csv",
+        "PM2.5 (㎍/m³)": "미세먼지_PM2.5.csv",
+        "PM10 (㎍/m³)": "미세먼지_PM10.csv",
+        "SO₂ (ppm)": "SO2.csv",
+        "NO₂ (ppm)": "NO2.csv",
         "CO (ppm)": "CO.csv",
     }
 
     frames = []
     for pollutant, file in pollutant_files.items():
         if not os.path.exists(file):
-            st.error(f"\u274c 파일 없음: {file}")
+            st.error(f"❌ 파일 없음: {file}")
             continue
 
         df = pd.read_csv(file, encoding="utf-8-sig")
-        df = df[df["\uad6c\ubd84(1)"] != "\ucd1d\uacc4"].copy()
+        df = df[df["구분(1)"] != "총계"].copy()
         month_cols = [col for col in df.columns if col.startswith("2024.")]
         df[month_cols] = df[month_cols].apply(pd.to_numeric, errors="coerce")
 
-        df_long = df.melt(id_vars=["\uad6c\ubd84(1)", "\uad6c\ubd84(2)"],
+        df_long = df.melt(id_vars=["구분(1)", "구분(2)"],
                            value_vars=month_cols,
                            var_name="month",
                            value_name="value")
@@ -66,21 +66,21 @@ def load_data():
 all_data = load_data()
 
 # Sidebar
-st.sidebar.header("\ud83d\udd0d 조회 조건")
-province_list = sorted(all_data["\uad6c\ubd84(1)"].unique())
+st.sidebar.header("🔍 조회 조건")
+province_list = sorted(all_data["구분(1)"].unique())
 selected_province = st.sidebar.selectbox("1️⃣ 시·도 선택", province_list)
-city_list = sorted(all_data[all_data["\uad6c\ubd84(1)"] == selected_province]["\uad6c\ubd84(2)"].unique())
+city_list = sorted(all_data[all_data["구분(1)"] == selected_province]["구분(2)"].unique())
 selected_city = st.sidebar.selectbox("2️⃣ 도시 선택", city_list)
 
 pollutant_options = sorted(all_data["pollutant"].unique())
 selected_pollutants = st.sidebar.multiselect("3️⃣ 대기 오염 물질 선택", pollutant_options, default=pollutant_options)
 
 # 필터링
-filtered = all_data[(all_data["\uad6c\ubd84(1)"] == selected_province) &
-                    (all_data["\uad6c\ubd84(2)"] == selected_city) &
+filtered = all_data[(all_data["구분(1)"] == selected_province) &
+                    (all_data["구분(2)"] == selected_city) &
                     (all_data["pollutant"].isin(selected_pollutants))]
 
-st.markdown(f"# \ud83c\udf07 {selected_province} {selected_city} 대기질 대시보드")
+st.markdown(f"# :cityscape: {selected_province} {selected_city} 대기질 대시보드")
 
 if filtered.empty:
     st.warning("조건에 해당하는 데이터가 없습니다.")
@@ -109,15 +109,15 @@ subscores = pollutant_relative_score(avg_values, global_avg_by_pollutant)
 final_score = overall_score(subscores)
 
 if final_score >= 80:
-    score_tag = "\ud83d\udfe2 매우 좋음"
+    score_tag = ":green_circle: 매우 좋음"
 elif final_score >= 60:
-    score_tag = "\ud83d\udfe1 보통"
+    score_tag = ":yellow_circle: 보통"
 elif final_score >= 40:
-    score_tag = "\ud83d\udfe0 나쁨"
+    score_tag = ":orange_circle: 나쁨"
 else:
-    score_tag = "\ud83d\udd34 매우 나쁨"
+    score_tag = ":red_circle: 매우 나쁨"
 
-st.markdown("""### \ud83e\uddee 종합 대기질 점수""")
+st.markdown("""### 🧮 종합 대기질 점수""")
 st.metric(label=f"{score_tag} (기준 50점)", value=f"{final_score:.1f}점")
 
 # 최신 월 데이터
@@ -133,7 +133,7 @@ for i, pol in enumerate(selected_pollutants):
 def compute_city_scores(df: pd.DataFrame, target_month: pd.Timestamp) -> pd.DataFrame:
     latest_df = df[df["month"] == target_month]
     records = []
-    for city, group in latest_df.groupby("\uad6c\ubd84(1)"):
+    for city, group in latest_df.groupby("구분(1)"):
         avg_dict = group.groupby("pollutant")["value"].mean().to_dict()
         subs = pollutant_relative_score(avg_dict, global_avg_by_pollutant)
         rec = {"city": city, "score": overall_score(subs)}
@@ -170,16 +170,12 @@ def make_korea_map(df: pd.DataFrame) -> folium.Map:
             continue
         if score >= 80:
             color = "green"
-            emoji = "\ud83d\udfe2"
         elif score >= 60:
             color = "yellow"
-            emoji = "\ud83d\udfe1"
         elif score >= 40:
             color = "orange"
-            emoji = "\ud83d\udfe0"
         else:
             color = "red"
-            emoji = "\ud83d\udd34"
 
         folium.CircleMarker(
             location=lat_lng,
@@ -188,16 +184,15 @@ def make_korea_map(df: pd.DataFrame) -> folium.Map:
             fill=True,
             fill_color=color,
             fill_opacity=0.8,
-            popup=f"{emoji} {city} : {score:.1f}점",
+            popup=f"{city} : {score:.1f}점",
         ).add_to(m)
     return m
 
 city_scores_df = compute_city_scores(all_data, all_data["month"].max())
-st.markdown("## \ud83d\uddcc 전국 대기질 현황 (최신 월)")
+st.markdown("## :map: 전국 대기질 현황 (최신 월)")
 html(make_korea_map(city_scores_df)._repr_html_(), height=600, scrolling=False)
 
-# 시간 변화 시각화
-st.markdown("## \ud83d\udcca 월별 추이 및 시간 변화")
+st.markdown("## :chart_with_upwards_trend: 월별 추이 및 시간 변화")
 for pol in selected_pollutants:
     pol_df = filtered[filtered["pollutant"] == pol].sort_values("month")
     st.subheader(pol)
@@ -208,8 +203,7 @@ for pol in selected_pollutants:
     ax.grid(True)
     st.pyplot(fig)
 
-# 원본 데이터
-with st.expander("\ud83d\udccb 원본 데이터 보기"):
+with st.expander("📋 원본 데이터 보기"):
     table = filtered.pivot_table(index="month", columns="pollutant", values="value").round(1).reset_index()
     table["month"] = table["month"].dt.strftime("%Y-%m")
     st.dataframe(table, use_container_width=True)
