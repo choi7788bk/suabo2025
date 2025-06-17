@@ -17,10 +17,10 @@ st.markdown(
     """
     <style>
         html, body, [class*="css"], .stApp {
-            background-color:#E6F0FF;              /* sky-blue background */
+            background-color:#001F3F;              /* sky-blue background */
         }
         h1, h2, h3, h4, h5, h6, .stMetricValue, .stMetricLabel {
-            color:#004C99;
+            color:white;
         }
         .stButton>button {
             background-color:#1E90FF !important;
