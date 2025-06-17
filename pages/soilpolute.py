@@ -3,37 +3,45 @@ import pandas as pd
 import folium
 from streamlit.components.v1 import html
 import numpy as np
+import branca.colormap as cm
+import matplotlib.pyplot as plt
+import base64
+from io import BytesIO
 
 # 페이지 설정
 st.set_page_config(page_title="토양오염 실태 지도", layout="wide")
 
-st.title("🧪 대한민국 토양오염 실태 지도 (2023)")
+st.title(":test_tube: 대한민국 토양오염 실태 지도 (2023)")
 st.caption("출처: 환경부 공개자료 - 토양오염실태조사")
 
-# 데이터 불러오기
 @st.cache_data
 def load_data():
-    df = pd.read_csv("토양오염실태조사결과_조사기관별_오염도_20250617151231.csv", header=[0, 1], skiprows=[2], encoding='utf-8')
-    df.columns = [f"{col[0]} ({col[1]})" if col[1] != '소계' else col[0] for col in df.columns]
-    df.rename(columns={"구분(1) (구분(1))": "시도", "구분(2) (구분(2))": "기관"}, inplace=True)
-    
-    # 주요 오염물질 선택
-    selected_cols = [
-        "2023 (카드뮴 Cd (mg/kg))", "2023 (납 Pb (mg/kg))", "2023 (수은 Hg (mg/kg))",
-        "2023 (유류 (mg/kg))", "2023 (유류 (mg/kg).1)", "2023 (유류 (mg/kg).4)",
-        "2023 (수소이온농도 pH (pH))"
-    ]
-    df = df[["시도", "기관"] + selected_cols]
-    df[selected_cols] = df[selected_cols].apply(pd.to_numeric, errors="coerce")
-    
-    return df
+    try:
+        df = pd.read_csv("토양오염실태조사결과_조사기관별_오염도_20250617151231.csv", header=[0, 1], skiprows=[2], encoding='utf-8')
+        df.columns = [f"{col[0]} ({col[1]})" if col[1] != '소계' else col[0] for col in df.columns]
+        df.rename(columns={"구분(1) (구분(1))": "시도", "구분(2) (구분(2))": "기관"}, inplace=True)
+
+        selected_cols = [
+            "2023 (카드뮴 Cd (mg/kg))", "2023 (납 Pb (mg/kg))", "2023 (수은 Hg (mg/kg))",
+            "2023 (유류 (mg/kg))", "2023 (유류 (mg/kg).1)", "2023 (유류 (mg/kg).4)",
+            "2023 (수소이온농도 pH (pH))"
+        ]
+
+        df = df[["시도", "기관"] + selected_cols]
+        df[selected_cols] = df[selected_cols].apply(pd.to_numeric, errors="coerce")
+
+        return df
+    except Exception as e:
+        st.error(f"데이터를 불러오는 중 오류 발생: {e}")
+        return pd.DataFrame()
 
 data = load_data()
 
-# 시도별 평균값 계산
+if data.empty:
+    st.stop()
+
 mean_by_city = data.groupby("시도").mean(numeric_only=True).reset_index()
 
-# 좌표 설정
 CITY_COORDS = {
     "서울특별시": (37.5665, 126.9780),
     "부산광역시": (35.1796, 129.0756),
@@ -54,8 +62,25 @@ CITY_COORDS = {
     "제주특별자치도": (33.4996, 126.5312)
 }
 
-# 지도 생성 함수
-def make_map(df):
+max_cd = mean_by_city["2023 (카드뮴 Cd (mg/kg))"].max()
+colormap = cm.linear.YlOrRd_09.scale(0, max_cd)
+colormap.caption = "카드뮴 농도 (mg/kg)"
+
+def generate_city_chart(city):
+    city_df = data[data["시도"] == city].groupby("기관").mean(numeric_only=True)
+    fig, ax = plt.subplots(figsize=(6, 4))
+    city_df[["2023 (카드뮴 Cd (mg/kg))", "2023 (납 Pb (mg/kg))", "2023 (수은 Hg (mg/kg))"]].plot(kind="bar", ax=ax)
+    plt.title(f"{city} 주요 중금속 평균치 (기관별)")
+    plt.ylabel("mg/kg")
+    plt.tight_layout()
+
+    buf = BytesIO()
+    plt.savefig(buf, format="png")
+    plt.close(fig)
+    data_uri = base64.b64encode(buf.getvalue()).decode("utf-8")
+    return f'<img src="data:image/png;base64,{data_uri}" width="400"/>'
+
+def make_map(df, selected_city=None):
     m = folium.Map(location=[36.5, 127.8], zoom_start=7)
     for _, row in df.iterrows():
         city = row["시도"]
@@ -72,24 +97,33 @@ def make_map(df):
                 f"납: {pb:.2f} mg/kg<br>"
                 f"수은: {hg:.2f} mg/kg<br>"
                 f"유류(TPH): {tph:.2f} mg/kg<br>"
-                f"pH: {ph:.2f}"
+                f"pH: {ph:.2f}<br>"
+                + generate_city_chart(city)
             )
             folium.CircleMarker(
                 location=coords,
-                radius=10,
-                color="crimson",
+                radius=12 if city == selected_city else 8,
+                color=colormap(cd),
                 fill=True,
-                fill_color="crimson",
-                fill_opacity=0.7,
-                popup=folium.Popup(label, max_width=300)
+                fill_color=colormap(cd),
+                fill_opacity=0.8,
+                popup=folium.Popup(label, max_width=450)
             ).add_to(m)
+    colormap.add_to(m)
     return m
 
-# 지도 표시
-st.markdown("### 🗺️ 시도별 토양오염 평균 지도")
-map_obj = make_map(mean_by_city)
-html(map_obj._repr_html_(), height=600)
+st.sidebar.header("🔎 도시별 데이터 조회")
+states = mean_by_city["시도"].unique().tolist()
+selected = st.sidebar.selectbox("시/도 선택", ["전체 보기"] + states)
 
-# 데이터 테이블
-st.markdown("### 📋 시도별 오염물질 평균 농도 (단위: mg/kg 또는 pH)")
-st.dataframe(mean_by_city.set_index("시도").round(3), use_container_width=True)
+if selected != "전체 보기":
+    city_data = mean_by_city[mean_by_city["시도"] == selected].copy()
+    st.markdown(f"### :world_map: {selected}의 토양오염 평균 지도")
+    html(make_map(city_data, selected)._repr_html_(), height=650)
+    st.markdown(f"### :bar_chart: {selected}의 오염물질 평균 농도")
+    st.dataframe(city_data.set_index("시도").round(3), use_container_width=True)
+else:
+    st.markdown("### :world_map: 시도별 토양오염 평균 지도")
+    html(make_map(mean_by_city)._repr_html_(), height=650)
+    st.markdown("### :bar_chart: 시도별 오염물질 평균 농도 (단위: mg/kg 또는 pH)")
+    st.dataframe(mean_by_city.set_index("시도").round(3), use_container_width=True)
