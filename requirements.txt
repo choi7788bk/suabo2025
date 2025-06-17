@@ -1,1 +1,5 @@
 folium
+streamlit
+pandas
+folium
+matplotlib
