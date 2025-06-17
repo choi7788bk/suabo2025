@@ -219,3 +219,14 @@ with st.expander("📋 원본 데이터 보기"):
     st.dataframe(table, use_container_width=True)
 
 st.caption("데이터 출처: 환경부 공개 API — 2024년 월별 측정값")
+
+st.markdown("## 🧠 오염물질 설명")
+
+cols = st.columns(3)
+cols[0].info("**PM2.5 (초미세먼지)**\n\n폐 깊숙이 침투 → 심혈관질환 및 암 유발")
+cols[1].info("**PM10 (미세먼지)**\n\n코·기관지 자극 → 호흡기 악화")
+cols[2].info("**NO₂ (이산화질소)**\n\n천식, 기관지염 악화")
+
+cols = st.columns(2)
+cols[0].info("**SO₂ (아황산가스)**\n\n점막 자극, 산성비 원인")
+cols[1].info("**CO (일산화탄소)**\n\n산소 결합 방해 → 고농도 노출 시 치명적")
