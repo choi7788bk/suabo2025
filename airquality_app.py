@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import os
@@ -17,19 +16,19 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-        html, body, [class*="css"], .stApp {
-            background-color:#001F3F;              /* sky-blue background */
-        }
-        h1, h2, h3, h4, h5, h6, .stMetricValue, .stMetricLabel {
-            color:white;
-        }
-        .stButton>button {
-            background-color:#1E90FF !important;
-            color:white !important;
-            border:none;
-            border-radius:6px;
-        }
-    </style>
+    html, body, [class*="css"], .stApp {
+        background-color:#E0F7FA;              /* sky-blue background */
+    }
+    h1, h2, h3, h4, h5, h6, .stMetricValue, .stMetricLabel {
+        color:#003366;                         /* dark blue text for contrast */
+    }
+    .stButton>button {
+        background-color:#1E90FF !important;
+        color:white !important;
+        border:none;
+        border-radius:6px;
+    }
+</style>
     """,
     unsafe_allow_html=True,
 )
