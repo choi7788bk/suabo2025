@@ -179,8 +179,7 @@ def make_korea_map(df: pd.DataFrame, focus_city=None) -> folium.Map:
     "경상북도": (36.4919, 128.8889),
     "경상남도": (35.4606, 128.2132),
     "제주특별자치도": (33.4996, 126.5312)
-}
-
+    
 def make_korea_map(df: pd.DataFrame, focus_city: str = None) -> folium.Map:
     m = folium.Map(location=[36.5, 127.8], zoom_start=7, tiles="CartoDB positron")
     colormap = cm.linear.YlGnBu_09.scale(0, 100)
