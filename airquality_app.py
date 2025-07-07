@@ -177,8 +177,12 @@ CITY_COORDS = {
 }
 
 def make_korea_map(df: pd.DataFrame) -> folium.Map:
-    # 바다와 육지 구분이 더 명확한 지도 스타일
-    m = folium.Map(location=[36.5, 127.8], zoom_start=7, tiles="Stamen Terrain")
+    m = folium.Map(
+        location=[36.5, 127.8],
+        zoom_start=7,
+        tiles="Stamen Terrain",
+        attr="Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL."
+    )
 
     for _, row in df.iterrows():
         city = row["city"]
@@ -200,7 +204,6 @@ def make_korea_map(df: pd.DataFrame) -> folium.Map:
             color = "red"
             emoji = "🔴"
 
-        # 선택한 시/도는 더 강조된 색상과 이모지, 반경
         if city == selected_province:
             folium.CircleMarker(
                 location=lat_lng,
