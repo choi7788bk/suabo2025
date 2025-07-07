@@ -17,16 +17,24 @@ st.markdown(
     """
     <style>
         html, body, [class*="css"], .stApp {
-            background-color:#001F3F;              /* sky-blue background */
+            background-color:#E6F2FF;  /* 밝은 하늘색 배경 */
+            color:#000000;             /* 기본 텍스트 색상 */
         }
         h1, h2, h3, h4, h5, h6, .stMetricValue, .stMetricLabel {
-            color:white;
+            color:#000000;             /* 헤더 및 메트릭 텍스트 색상 */
         }
         .stButton>button {
             background-color:#1E90FF !important;
             color:white !important;
             border:none;
             border-radius:6px;
+        }
+        .css-1v0mbdj, .css-10trblm {  /* sidebar header & markdown 내 텍스트 */
+            color:#000000 !important;
+        }
+        .css-1cpxqw2 { /* metric container background */
+            background-color: rgba(255, 255, 255, 0.6) !important;
+            border-radius: 10px !important;
         }
     </style>
     """,
