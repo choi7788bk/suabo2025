@@ -178,7 +178,7 @@ def make_korea_map(df: pd.DataFrame, focus_city=None) -> folium.Map:
     "전라남도": (34.8161, 126.4635),
     "경상북도": (36.4919, 128.8889),
     "경상남도": (35.4606, 128.2132),
-    "제주특별자치도": (33.4996, 126.5312),
+    "제주특별자치도": (33.4996, 126.5312)
 }
 
 def make_korea_map(df: pd.DataFrame, focus_city: str = None) -> folium.Map:
