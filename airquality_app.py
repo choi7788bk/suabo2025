@@ -178,33 +178,48 @@ CITY_COORDS = {
 
 def make_korea_map(df: pd.DataFrame) -> folium.Map:
     m = folium.Map(location=[36.5, 127.8], zoom_start=7, tiles="CartoDB positron")
+
     for _, row in df.iterrows():
         city = row["city"]
         score = row["score"]
         lat_lng = CITY_COORDS.get(city)
         if not lat_lng:
             continue
+
         if score >= 80:
             color = "green"
-            emoji = "🟢"
+            emoji = "🟢 매우 좋음"
         elif score >= 60:
             color = "yellow"
-            emoji = "🟡"
+            emoji = "🟡 보통"
         elif score >= 40:
             color = "orange"
-            emoji = "🟠"
+            emoji = "🟠 나쁨"
         else:
             color = "red"
-            emoji = "🔴"
+            emoji = "🔴 매우 나쁨"
+
+        # 선택된 도시 강조
+        is_selected = city == selected_province
+        radius = 14 if is_selected else 9
+        weight = 3 if is_selected else 1
+        border_color = "black" if is_selected else color
+
         folium.CircleMarker(
             location=lat_lng,
-            radius=12 if city == selected_province else 8,
-            color=color,
+            radius=radius,
+            color=border_color,
+            weight=weight,
             fill=True,
             fill_color=color,
-            fill_opacity=0.8,
-            popup=f"{emoji} {city} : {score:.1f}점",
+            fill_opacity=0.85,
+            popup=folium.Popup(
+                html=f"<b>{city}</b><br>{emoji}<br><b>점수:</b> {score:.1f}",
+                max_width=200,
+            ),
+            tooltip=f"{city}: {score:.1f}점",
         ).add_to(m)
+
     return m
 
 st.markdown("## 🗺️ 전국 대기질 현황 (최신 월)")
