@@ -137,7 +137,7 @@ CITY_COORDS = {
     "전라남도": (34.8161, 126.4635),
     "경상북도": (36.4919, 128.8889),
     "경상남도": (35.4606, 128.2132),
-    "제주특별자치도": (33.4996, 126.5312)
+    "제주특별자치도": (33.4996, 126.5312),
 }
 
 # folium 지도 생성 함수
@@ -178,7 +178,7 @@ def make_korea_map(df: pd.DataFrame, focus_city=None) -> folium.Map:
     "전라남도": (34.8161, 126.4635),
     "경상북도": (36.4919, 128.8889),
     "경상남도": (35.4606, 128.2132),
-    "제주특별자치도": (33.4996, 126.5312)
+    "제주특별자치도": (33.4996, 126.5312),
     
 def make_korea_map(df: pd.DataFrame, focus_city: str = None) -> folium.Map:
     m = folium.Map(location=[36.5, 127.8], zoom_start=7, tiles="CartoDB positron")
