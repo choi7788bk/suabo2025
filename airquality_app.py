@@ -5,13 +5,15 @@ import folium
 import branca.colormap as cm
 from streamlit.components.v1 import html
 
+# ---------- Page Setup ----------
 st.set_page_config(
-    page_title="Air Quality Dashboard",
+    page_title="Korea Air Quality Dashboard",
     page_icon=":sunny:",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
+# ---------- UI Styling ----------
 st.markdown("""
 <style>
     html, body, .stApp {
@@ -28,9 +30,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 언어 선택
+# ---------- Language Support ----------
 lang = st.sidebar.selectbox("🌐 Language / 언어", ["한국어", "English"])
-
 LABELS = {
     "한국어": {
         "title": "대한민국 대기질 대시보드",
@@ -57,17 +58,16 @@ LABELS = {
 }
 L = LABELS[lang]
 
-# 데이터 불러오기
+# ---------- Load Data ----------
 @st.cache_data
 def load_data():
     pollutant_files = {
-        "PM2.5 (㎍/m³)": "미세먼지_PM2.5__월별_도시별_대기오염도_20250610151935.csv",
-        "PM10 (㎍/m³)": "미세먼지_PM10__월별_도시별_대기오염도_20250610152841.csv",
-        "SO₂ (ppm)": "아황산가스_월별_도시별_대기오염도_20250610152914.csv",
-        "NO₂ (ppm)": "이산화질소_월별_도시별_대기오염도_20250610153008.csv",
-        "CO (ppm)": "일산화탄소_월별_도시별_대기오염도_20250610153041.csv",
+        "PM2.5 (㎍/m³)": "미세먼지_PM2.5__월별_도시별.csv",
+        "PM10 (㎍/m³)": "미세먼지_PM10__월별_도시별.csv",
+        "SO₂ (ppm)": "아황산가스_월별_도시별.csv",
+        "NO₂ (ppm)": "이산화질소_월별_도시별.csv",
+        "CO (ppm)": "일산화탄소_월별_도시별.csv",
     }
-
     frames = []
     for pol, file in pollutant_files.items():
         if not os.path.exists(file):
@@ -85,11 +85,8 @@ def load_data():
         df_long["month"] = pd.to_datetime(df_long["month"], format="%Y.%m")
         frames.append(df_long)
     return pd.concat(frames, ignore_index=True)
-all_data = load_data()
-pollutant_options = sorted(all_data["pollutant"].unique())
-latest_month = all_data["month"].max()
 
-# 점수 계산
+# ---------- Core Functions ----------
 def pollutant_relative_score(city_avg: dict, national_avg: dict) -> dict:
     scores = {}
     for pol, val in city_avg.items():
@@ -105,9 +102,8 @@ def pollutant_relative_score(city_avg: dict, national_avg: dict) -> dict:
 def overall_score(subscores: dict) -> float:
     return sum(subscores.values()) / len(subscores)
 
-# 도시 점수 계산
 @st.cache_data
-def compute_city_scores(df: pd.DataFrame, month: pd.Timestamp) -> pd.DataFrame:
+def compute_city_scores(df: pd.DataFrame, month: pd.Timestamp) -> tuple:
     base = df[df["month"] == month]
     national_avg = base.groupby("pollutant")["value"].mean().to_dict()
     records = []
@@ -117,9 +113,7 @@ def compute_city_scores(df: pd.DataFrame, month: pd.Timestamp) -> pd.DataFrame:
         records.append({"city": city, "score": overall_score(subs)})
     return pd.DataFrame(records), national_avg
 
-city_scores_df, national_avg_by_pollutant = compute_city_scores(all_data, latest_month)
-
-# 좌표
+# ---------- 지도 좌표 ----------
 CITY_COORDS = {
     "서울특별시": (37.5665, 126.9780),
     "부산광역시": (35.1796, 129.0756),
@@ -140,47 +134,7 @@ CITY_COORDS = {
     "제주특별자치도": (33.4996, 126.5312),
 }
 
-# folium 지도 생성 함수
-def make_korea_map(df: pd.DataFrame, focus_city=None) -> folium.Map:
-    m = folium.Map(location=[36.5, 127.8], zoom_start=7, tiles="CartoDB positron")
-    colormap = cm.linear.YlGnBu_09.scale(0, 100)
-    colormap.caption = 'Air Quality Score'
-    colormap.add_to(m)
-
-    for _, row in df.iterrows():
-        city, score = row["city"], row["score"]
-        coords = CITY_COORDS.get(city)
-        if not coords:
-            continue
-        folium.CircleMarker(
-            location=coords,
-            radius=10 + score / 15,
-            color=colormap(score),
-            fill=True,
-            fill_color=colormap(score),
-            fill_opacity=0.9,
-            tooltip=f"{city}: {score:.1f}점",
-        ).add_to(m)
-
-    if focus_city and CITY_COORDS.get(focus_city):
-        m.location = CITY_COORDS[focus_city]
-        m.zoom_start = 10
-
-    return m
-    "대전광역시": (36.3504, 127.3845),
-    "울산광역시": (35.5384, 129.3114),
-    "세종특별자치시": (36.4801, 127.2890),
-    "경기도": (37.2636, 127.0286),
-    "강원특별자치도": (37.8228, 128.1555),
-    "충청북도": (36.6357, 127.4917),
-    "충청남도": (36.5184, 126.8000),
-    "전북특별자치도": (35.8200, 127.1088),
-    "전라남도": (34.8161, 126.4635),
-    "경상북도": (36.4919, 128.8889),
-    "경상남도": (35.4606, 128.2132),
-    "제주특별자치도": (33.4996, 126.5312),
-    
-def make_korea_map(df: pd.DataFrame, focus_city: str = None) -> folium.Map:
+def make_korea_map(df: pd.DataFrame) -> folium.Map:
     m = folium.Map(location=[36.5, 127.8], zoom_start=7, tiles="CartoDB positron")
     colormap = cm.linear.YlGnBu_09.scale(0, 100)
     colormap.caption = "Air Quality Score"
@@ -200,67 +154,65 @@ def make_korea_map(df: pd.DataFrame, focus_city: str = None) -> folium.Map:
             ).add_to(m)
     colormap.add_to(m)
     return m
-st.title(f"🏙️ {L['title']}")
 
-# --- 사용자 입력 ---
+# ---------- 데이터 로딩 ----------
+all_data = load_data()
+pollutant_options = sorted(all_data["pollutant"].unique())
+latest_month = all_data["month"].max()
+city_scores_df, national_avg_by_pollutant = compute_city_scores(all_data, latest_month)
+
+# ---------- 사용자 선택 ----------
+st.title(f"🏙️ {L['title']}")
 province_list = sorted(all_data["구분(1)"].unique())
 selected_province = st.sidebar.selectbox(L["province"], [""] + province_list)
-
+selected_city = ""
 if selected_province:
     city_list = sorted(all_data[all_data["구분(1)"] == selected_province]["구분(2)"].unique())
     selected_city = st.sidebar.selectbox(L["city"], [""] + city_list)
-else:
-    selected_city = ""
 
 selected_pollutants = st.sidebar.multiselect(L["pollutants"], pollutant_options, default=pollutant_options)
 
-# --- 조건에 따른 대시보드 ---
+# ---------- 전국 vs 도시 대시보드 ----------
 if not selected_province or not selected_city:
-    # 전국 대시보드
     st.subheader(L["national_map"])
-    nat_map = make_korea_map(city_scores_df)
-    html(nat_map._repr_html_(), height=600)
+    html(make_korea_map(city_scores_df)._repr_html_(), height=600)
 
     st.subheader(L["national_avg"])
     for pol in pollutant_options:
-        df = all_data[all_data["pollutant"] == pol]
-        line = df.groupby("month")["value"].mean()
-        st.line_chart(line, use_container_width=True)
-
+        pol_df = all_data[all_data["pollutant"] == pol]
+        monthly_avg = pol_df.groupby("month")["value"].mean()
+        st.line_chart(monthly_avg, use_container_width=True)
 else:
-    # 특정 도시 대시보드
     filtered = all_data[
         (all_data["구분(1)"] == selected_province) &
         (all_data["구분(2)"] == selected_city) &
         (all_data["pollutant"].isin(selected_pollutants))
     ]
     st.header(f"📍 {selected_province} {selected_city} {L['detail']}")
-    
     if filtered.empty:
         st.warning(L["no_data"])
         st.stop()
 
-    # 점수 계산
     city_avg = filtered.groupby("pollutant")["value"].mean().to_dict()
     subscores = pollutant_relative_score(city_avg, national_avg_by_pollutant)
     final_score = overall_score(subscores)
-
     st.subheader(L["score"])
     st.metric("Score", f"{final_score:.1f} / 100")
 
-    # 확대 지도
+    # 도시 중심 지도
     coords = CITY_COORDS.get(selected_province)
     if coords:
         m = folium.Map(location=coords, zoom_start=10)
         folium.Marker(coords, tooltip=f"{selected_city}").add_to(m)
         html(m._repr_html_(), height=500)
 
-    # 추이
+    # 월별 추이
     st.subheader("📈 월별 추이")
     for pol in selected_pollutants:
         pol_df = filtered[filtered["pollutant"] == pol].sort_values("month")
         st.line_chart(pol_df.set_index("month")["value"], use_container_width=True)
 
+    # 데이터 테이블
     with st.expander("📋 원본 데이터"):
         table = (
             filtered.pivot_table(index="month", columns="pollutant", values="value")
