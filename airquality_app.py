@@ -102,6 +102,15 @@ selected_pollutants = st.sidebar.multiselect(
     "3️⃣ 대기 오염 물질 선택", pollutant_options, default=pollutant_options
 )
 
+# 전국 종합 점수 지도는 항상 표시
+st.markdown("## 🗺️ 전국 대기질 현황 (최신 월)")
+korea_map = make_korea_map(city_scores_df)
+html(korea_map._repr_html_(), height=600, scrolling=False)
+
+# 시도 및 도시 선택 상태에 따라 분석 화면 조건 분기
+if selected_province == "전체" or selected_city == "전체":
+    st.stop()
+    
 filtered = all_data[(all_data["구분(1)"] == selected_province) &
                     (all_data["구분(2)"] == selected_city) &
                     (all_data["pollutant"].isin(selected_pollutants))]
