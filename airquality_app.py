@@ -112,14 +112,18 @@ avg_values = filtered.groupby("pollutant")["value"].mean().to_dict()
 subscores = pollutant_relative_score(avg_values, national_avg_by_pollutant)
 final_score = overall_score(subscores)
 
-if final_score >= 80:
-    score_tag = "🟢 매우 좋음"
-elif final_score >= 60:
-    score_tag = "🟡 보통"
-elif final_score >= 40:
-    score_tag = "🟠 나쁨"
-else:
+if final_score < 20:
     score_tag = "🔴 매우 나쁨"
+elif final_score < 40:
+    score_tag = "🟠 나쁨"
+elif final_score < 45:
+    score_tag = "⚠️ 위험"
+elif final_score < 60:
+    score_tag = "🟡 보통"
+elif final_score < 80:
+    score_tag = "🟢 좋음"
+else:
+    score_tag = "💙 매우 좋음"
 
 st.markdown("### 🧮 종합 대기질 점수")
 st.metric(label=f"{score_tag} (100점 만점 기준)", value=f"{final_score:.1f}점")
@@ -176,18 +180,24 @@ def make_korea_map(df: pd.DataFrame) -> folium.Map:
         lat_lng = CITY_COORDS.get(city)
         if not lat_lng:
             continue
-        if score >= 80:
-            color = "green"
-            emoji = "🟢"
-        elif score >= 60:
-            color = "yellow"
-            emoji = "🟡"
-        elif score >= 40:
-            color = "orange"
-            emoji = "🟠"
-        else:
-            color = "red"
-            emoji = "🔴"
+       if score < 20:
+    color = "darkred"
+    emoji = "🔴 매우 나쁨"
+elif score < 40:
+    color = "orangered"
+    emoji = "🟠 나쁨"
+elif score < 45:
+    color = "orange"
+    emoji = "⚠️ 위험"
+elif score < 60:
+    color = "gold"
+    emoji = "🟡 보통"
+elif score < 80:
+    color = "green"
+    emoji = "🟢 좋음"
+else:
+    color = "blue"
+    emoji = "💙 매우 좋음"
         folium.CircleMarker(
             location=lat_lng,
             radius=12 if city == selected_province else 8,
