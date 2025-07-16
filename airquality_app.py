@@ -207,7 +207,7 @@ folium.CircleMarker(
     fill_opacity=0.8,
     popup=f"{emoji} {city} : {score:.1f}점",
 ).add_to(m)
-return m
+ return m
 
 st.markdown("## 🗺️ 전국 대기질 현황 (최신 월)")
 korea_map = make_korea_map(city_scores_df)
