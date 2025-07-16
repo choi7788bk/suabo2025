@@ -181,23 +181,23 @@ def make_korea_map(df: pd.DataFrame) -> folium.Map:
         if not lat_lng:
             continue
        if score < 20:
-    color = "darkred"
-    emoji = "🔴 매우 나쁨"
-elif score < 40:
-    color = "orangered"
-    emoji = "🟠 나쁨"
-elif score < 45:
-    color = "orange"
-    emoji = "⚠️ 위험"
-elif score < 60:
-    color = "gold"
-    emoji = "🟡 보통"
-elif score < 80:
-    color = "green"
-    emoji = "🟢 좋음"
-else:
-    color = "blue"
-    emoji = "💙 매우 좋음"
+          color = "darkred"
+          emoji = "🔴 매우 나쁨"
+       elif score < 40:
+          color = "orangered"
+          emoji = "🟠 나쁨"
+       elif score < 45:
+          color = "orange"
+          emoji = "⚠️ 위험"
+       elif score < 60:
+          color = "gold"
+          emoji = "🟡 보통"
+       elif score < 80:
+          color = "green"
+          emoji = "🟢 좋음"
+       else:
+          color = "blue"
+          emoji = "💙 매우 좋음"
 folium.CircleMarker(
     location=lat_lng,
     radius=12 if city == selected_province else 8,
