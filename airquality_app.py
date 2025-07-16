@@ -180,22 +180,22 @@ def make_korea_map(df: pd.DataFrame) -> folium.Map:
         lat_lng = CITY_COORDS.get(city)
         if not lat_lng:
             continue
-       if score < 20:
+        if score < 20:
           color = "darkred"
           emoji = "🔴 매우 나쁨"
-       elif score < 40:
+        elif score < 40:
           color = "orangered"
           emoji = "🟠 나쁨"
-       elif score < 45:
+        elif score < 45:
           color = "orange"
           emoji = "⚠️ 위험"
-       elif score < 60:
+        elif score < 60:
           color = "gold"
           emoji = "🟡 보통"
-       elif score < 80:
+        elif score < 80:
           color = "green"
           emoji = "🟢 좋음"
-       else:
+        else:
           color = "blue"
           emoji = "💙 매우 좋음"
 folium.CircleMarker(
